@@ -15,11 +15,7 @@ pub fn BinaryStreamReader(comptime ReaderType: type) type {
         }
 
         pub fn read_short(self: Self, endian: std.builtin.Endian) !i16 {
-            var buffer: [2]u8 = undefined;
-            const n = try self.reader.read(&buffer);
-            if(n < 2) {
-                return error.NotEnoughBytes;
-            }
+            const buffer = try self.try_get(2);
             const first_byte = @as(i16, @intCast(buffer[0]));
             const second_byte = @as(i16, @intCast(buffer[1]));
             
@@ -27,6 +23,26 @@ pub fn BinaryStreamReader(comptime ReaderType: type) type {
                 .little => ((second_byte & 0xFF) << 8) | (first_byte & 0xFF),
                 .big => ((first_byte & 0xFF) << 8) | (second_byte & 0xFF)
             };
+        }
+
+        pub fn read_ushort(self: Self, endian: std.builtin.Endian) !u16 {
+            const buffer = try self.try_get(2);
+            const first_byte = @as(u16, @intCast(buffer[0]));
+            const second_byte = @as(u16, @intCast(buffer[1]));
+
+            return switch(endian) {
+                .little => ((second_byte & 0xFF) << 8) | (first_byte & 0xFF),
+                .big => ((first_byte & 0xFF) << 8) | (second_byte & 0xFF)
+            };
+        }
+
+        fn try_get(self: Self, comptime size: usize) ![size]u8 {
+            var buffer: [2]u8 = undefined;
+            const n = try self.reader.read(&buffer);
+            if(n < 2) {
+                return error.NotEnoughBytes;
+            }
+            return buffer;
         }
     };
 }
@@ -82,4 +98,6 @@ test "basic read" {
     // short
     try std.testing.expect(try stream.read_short(.little) == -500);
     try std.testing.expect(try stream.read_short(.big) == -500);
+    try std.testing.expect(try stream.read_ushort(.little) == 30000);
+    try std.testing.expect(try stream.read_ushort(.big) == 30000);
 }
