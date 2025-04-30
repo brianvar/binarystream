@@ -30,22 +30,14 @@ pub fn BinaryStreamWriter(comptime buffer_size: usize, comptime WriterType: type
             return try self.writer.write(data[0..]);
         }
 
-        pub fn write_triad(self: Self, value: i32, endian: std.builtin.Endian) !usize {
-            const data = std.mem.toBytes(std.mem.nativeTo(i32, value, endian));
-            const data_triad = switch (endian) {
-                .little => data[0..3],
-                .big => data[1..]
-            };
-            return try self.writer.write(data_triad[0..]);
+        pub fn write_triad(self: Self, value: i24, endian: std.builtin.Endian) !usize {
+            const data = std.mem.toBytes(std.mem.nativeTo(i24, value, endian));
+            return try self.writer.write(data[0..3]);
         }
 
-        pub fn write_utriad(self: Self, value: u32, endian: std.builtin.Endian) !usize {
-            const data = std.mem.toBytes(std.mem.nativeTo(u32, value, endian));
-            const data_triad = switch (endian) {
-                .little => data[0..3],
-                .big => data[1..]
-            };
-            return try self.writer.write(data_triad[0..]);
+        pub fn write_utriad(self: Self, value: u24, endian: std.builtin.Endian) !usize {
+            const data = std.mem.toBytes(std.mem.nativeTo(u24, value, endian));
+            return try self.writer.write(data[0..3]);
         }
 
         pub fn write_int(self: Self, value: i32, endian: std.builtin.Endian) !usize {

@@ -16,28 +16,52 @@ pub fn BinaryStreamReader(comptime ReaderType: type) type {
 
         pub fn read_short(self: Self, endian: std.builtin.Endian) !i16 {
             const buffer = try self.try_get(2);
-            const first_byte = @as(i16, @intCast(buffer[0]));
-            const second_byte = @as(i16, @intCast(buffer[1]));
+            const first_byte: i16 = @intCast(buffer[0]);
+            const second_byte: i16 = @intCast(buffer[1]);
             
             return switch(endian) {
-                .little => ((second_byte & 0xFF) << 8) | (first_byte & 0xFF),
-                .big => ((first_byte & 0xFF) << 8) | (second_byte & 0xFF)
+                .little => second_byte << 8 | first_byte,
+                .big => first_byte << 8 | second_byte
             };
         }
 
         pub fn read_ushort(self: Self, endian: std.builtin.Endian) !u16 {
             const buffer = try self.try_get(2);
-            const first_byte = @as(u16, @intCast(buffer[0]));
-            const second_byte = @as(u16, @intCast(buffer[1]));
+            const first_byte: u16 = @intCast(buffer[0]);
+            const second_byte: u16 = @intCast(buffer[1]);
 
             return switch(endian) {
-                .little => ((second_byte & 0xFF) << 8) | (first_byte & 0xFF),
-                .big => ((first_byte & 0xFF) << 8) | (second_byte & 0xFF)
+                .little => second_byte << 8 | first_byte,
+                .big => first_byte << 8 | second_byte
+            };
+        }
+
+        pub fn read_triad(self: Self, endian: std.builtin.Endian) !i24 {
+            const buffer = try self.try_get(3);
+            const first_byte: i24 = @intCast(buffer[0]);
+            const second_byte: i24 = @intCast(buffer[1]);
+            const third_byte: i24 = @intCast(buffer[2]);
+            
+            return switch(endian) {
+                .little => third_byte << 16 | second_byte << 8 | first_byte,
+                .big => first_byte << 16 | second_byte << 8 | third_byte
+            };
+        }
+
+        pub fn read_utriad(self: Self, endian: std.builtin.Endian) !u24 {
+            const buffer = try self.try_get(3);
+            const first_byte: u24 = @intCast(buffer[0]);
+            const second_byte: u24 = @intCast(buffer[1]);
+            const third_byte: u24 = @intCast(buffer[2]);
+            
+            return switch(endian) {
+                .little => third_byte << 16 | second_byte << 8 | first_byte,
+                .big => first_byte << 16 | second_byte << 8 | third_byte
             };
         }
 
         fn try_get(self: Self, comptime size: usize) ![size]u8 {
-            var buffer: [2]u8 = undefined;
+            var buffer: [size]u8 = undefined;
             const n = try self.reader.read(&buffer);
             if(n < 2) {
                 return error.NotEnoughBytes;
@@ -100,4 +124,10 @@ test "basic read" {
     try std.testing.expect(try stream.read_short(.big) == -500);
     try std.testing.expect(try stream.read_ushort(.little) == 30000);
     try std.testing.expect(try stream.read_ushort(.big) == 30000);
+
+    // triad
+    try std.testing.expect(try stream.read_triad(.little) == -16000);
+    try std.testing.expect(try stream.read_triad(.big) == -16000);
+    try std.testing.expect(try stream.read_utriad(.little) == 36000);
+    try std.testing.expect(try stream.read_utriad(.big) == 36000);
 }
