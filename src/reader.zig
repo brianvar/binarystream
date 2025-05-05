@@ -1,6 +1,26 @@
 const std = @import("std");
 const native_endian = @import("builtin").target.cpu.arch.endian();
 
+fn swap_buffer(buffer: []u8) void {
+    for(0..buffer.len / 2) |i| {
+        std.mem.swap(u8, &buffer[i], &buffer[buffer.len - 1 - i]);
+    }
+}
+
+// https://graphics.stanford.edu/%7Eseander/bithacks.html#RoundUpPowerOf2
+fn closest_power_of_two(comptime number: usize) usize {
+    var numberCopy = number;
+    numberCopy -= 1;
+    numberCopy |= numberCopy >> 1;
+    numberCopy |= numberCopy >> 2;
+    numberCopy |= numberCopy >> 4;
+    numberCopy |= numberCopy >> 8;
+    numberCopy |= numberCopy >> 16;
+    numberCopy |= numberCopy >> 32;
+    numberCopy += 1;
+    return numberCopy;
+}
+
 pub fn BinaryStreamReader(comptime ReaderType: type) type {
     return struct {
         const Self = *const @This();
@@ -86,26 +106,6 @@ pub fn BinaryStreamReader(comptime ReaderType: type) type {
                 return error.NotEnoughBytes;
             }
             return buffer;
-        }
-
-        fn swap_buffer(buffer: []u8) void {
-            for(0..buffer.len / 2) |i| {
-                std.mem.swap(u8, &buffer[i], &buffer[buffer.len - 1 - i]);
-            }
-        }
-
-        // https://graphics.stanford.edu/%7Eseander/bithacks.html#RoundUpPowerOf2
-        fn closest_power_of_two(comptime number: usize) usize {
-            var numberCopy = number;
-            numberCopy -= 1;
-            numberCopy |= numberCopy >> 1;
-            numberCopy |= numberCopy >> 2;
-            numberCopy |= numberCopy >> 4;
-            numberCopy |= numberCopy >> 8;
-            numberCopy |= numberCopy >> 16;
-            numberCopy |= numberCopy >> 32;
-            numberCopy += 1;
-            return numberCopy;
         }
     };
 }
