@@ -1,7 +1,7 @@
 const std = @import("std");
 const native_endian = @import("builtin").target.cpu.arch.endian();
 
-fn swap_buffer(buffer: []u8) void {
+fn reverse_buffer(buffer: []u8) void {
     for(0..buffer.len / 2) |i| {
         std.mem.swap(u8, &buffer[i], &buffer[buffer.len - 1 - i]);
     }
@@ -86,12 +86,12 @@ pub fn BinaryStreamReader(comptime ReaderType: type) type {
             switch(native_endian) {
                 .little => {
                     if(endian == .big) {
-                        swap_buffer(&buffer);
+                        reverse_buffer(&buffer);
                     }
                 },
                 .big => {
                     if(endian == .little) {
-                        swap_buffer(&buffer);
+                        reverse_buffer(&buffer);
                     }
                 }
             }
