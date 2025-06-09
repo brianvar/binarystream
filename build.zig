@@ -4,19 +4,11 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const lib_mod = b.createModule(.{
+    const lib_mod = b.addModule("binarystream", .{
         .root_source_file = b.path("src/binarystream.zig"),
         .target = target,
         .optimize = optimize,
     });
-
-    const lib = b.addLibrary(.{
-        .linkage = .static,
-        .name = "binarystream",
-        .root_module = lib_mod,
-    });
-
-    b.installArtifact(lib);
 
     const lib_unit_tests = b.addTest(.{
         .root_module = lib_mod,
