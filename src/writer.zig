@@ -10,63 +10,63 @@ pub fn BinaryStreamWriter(comptime buffer_size: usize, comptime WriterType: type
             return try self.writer.write(value);
         }
 
-        pub fn write_bool(self: Self, value: bool) !usize {
-            const data = [1]u8{ @intFromBool(value) };
+        pub fn writeBool(self: Self, value: bool) !usize {
+            const data = [1]u8{@intFromBool(value)};
             return try self.writer.write(data[0..]);
         }
 
-        pub fn write_byte(self: Self, value: u8) !usize {
-            const data = [1]u8{ value };
+        pub fn writeByte(self: Self, value: u8) !usize {
+            const data = [1]u8{value};
             return try self.writer.write(data[0..]);
         }
 
-        pub fn write_short(self: Self, value: i16, endian: std.builtin.Endian) !usize {
+        pub fn writeShort(self: Self, value: i16, endian: std.builtin.Endian) !usize {
             const data = std.mem.toBytes(std.mem.nativeTo(i16, value, endian));
             return try self.writer.write(data[0..]);
         }
 
-        pub fn write_ushort(self: Self, value: u16, endian: std.builtin.Endian) !usize {
+        pub fn writeUnsignedShort(self: Self, value: u16, endian: std.builtin.Endian) !usize {
             const data = std.mem.toBytes(std.mem.nativeTo(u16, value, endian));
             return try self.writer.write(data[0..]);
         }
 
-        pub fn write_triad(self: Self, value: i24, endian: std.builtin.Endian) !usize {
+        pub fn writeTriad(self: Self, value: i24, endian: std.builtin.Endian) !usize {
             const data = std.mem.toBytes(std.mem.nativeTo(i24, value, endian));
             return try self.writer.write(data[0..3]);
         }
 
-        pub fn write_utriad(self: Self, value: u24, endian: std.builtin.Endian) !usize {
+        pub fn writeUnsignedTriad(self: Self, value: u24, endian: std.builtin.Endian) !usize {
             const data = std.mem.toBytes(std.mem.nativeTo(u24, value, endian));
             return try self.writer.write(data[0..3]);
         }
 
-        pub fn write_int(self: Self, value: i32, endian: std.builtin.Endian) !usize {
+        pub fn writeInt(self: Self, value: i32, endian: std.builtin.Endian) !usize {
             const data = std.mem.toBytes(std.mem.nativeTo(i32, value, endian));
             return try self.writer.write(data[0..]);
         }
 
-        pub fn write_uint(self: Self, value: u32, endian: std.builtin.Endian) !usize {
+        pub fn writeUnsignedInt(self: Self, value: u32, endian: std.builtin.Endian) !usize {
             const data = std.mem.toBytes(std.mem.nativeTo(u32, value, endian));
             return try self.writer.write(data[0..]);
         }
 
-        pub fn write_long(self: Self, value: i64, endian: std.builtin.Endian) !usize {
+        pub fn writeLong(self: Self, value: i64, endian: std.builtin.Endian) !usize {
             const data = std.mem.toBytes(std.mem.nativeTo(i64, value, endian));
             return try self.writer.write(data[0..]);
         }
 
-        pub fn write_ulong(self: Self, value: u64, endian: std.builtin.Endian) !usize {
+        pub fn writeUnsignedLong(self: Self, value: u64, endian: std.builtin.Endian) !usize {
             const data = std.mem.toBytes(std.mem.nativeTo(u64, value, endian));
             return try self.writer.write(data[0..]);
         }
 
-        pub fn write_float(self: Self, value: f32, endian: std.builtin.Endian) !usize {
+        pub fn writeFloat(self: Self, value: f32, endian: std.builtin.Endian) !usize {
             // cast to u32 since nativeTo cannot bitSwap floats
             const data = std.mem.toBytes(std.mem.nativeTo(u32, @bitCast(value), endian));
             return try self.writer.write(data[0..]);
         }
 
-        pub fn write_double(self: Self, value: f64, endian: std.builtin.Endian) !usize {
+        pub fn writeDouble(self: Self, value: f64, endian: std.builtin.Endian) !usize {
             // cast to u64 since nativeTo cannot bitSwap floats
             const data = std.mem.toBytes(std.mem.nativeTo(u64, @bitCast(value), endian));
             return try self.writer.write(data[0..]);
@@ -79,9 +79,7 @@ pub fn BinaryStreamWriter(comptime buffer_size: usize, comptime WriterType: type
 }
 
 pub fn binaryStreamWriter(comptime buffer_size: usize, writer: anytype) BinaryStreamWriter(buffer_size, @TypeOf(writer)) {
-    const buffered_writer: std.io.BufferedWriter(buffer_size, @TypeOf(writer)) = .{
-        .unbuffered_writer = writer
-    };
+    const buffered_writer: std.io.BufferedWriter(buffer_size, @TypeOf(writer)) = .{ .unbuffered_writer = writer };
     return .{ .writer = buffered_writer };
 }
 
@@ -94,43 +92,43 @@ test "basic write" {
     // byte
     const byte_buffer = [3]u8{ 1, 2, 3 };
     _ = try stream.write(byte_buffer[0..]);
-    _ = try stream.write_byte(4);
+    _ = try stream.writeByte(4);
 
     // bool
-    _ = try stream.write_bool(true);
-    _ = try stream.write_bool(false);
+    _ = try stream.writeBool(true);
+    _ = try stream.writeBool(false);
 
     // short
-    _ = try stream.write_short(-500, .little);
-    _ = try stream.write_short(-500, .big);
-    _ = try stream.write_ushort(30000, .little);
-    _ = try stream.write_ushort(30000, .big);
+    _ = try stream.writeShort(-500, .little);
+    _ = try stream.writeShort(-500, .big);
+    _ = try stream.writeUnsignedShort(30000, .little);
+    _ = try stream.writeUnsignedShort(30000, .big);
 
     // triad
-    _ = try stream.write_triad(-16000, .little);
-    _ = try stream.write_triad(-16000, .big);
-    _ = try stream.write_utriad(36000, .little);
-    _ = try stream.write_utriad(36000, .big);
+    _ = try stream.writeTriad(-16000, .little);
+    _ = try stream.writeTriad(-16000, .big);
+    _ = try stream.writeUnsignedTriad(36000, .little);
+    _ = try stream.writeUnsignedTriad(36000, .big);
 
     // int
-    _ = try stream.write_int(-100000, .little);
-    _ = try stream.write_int(-100000, .big);
-    _ = try stream.write_uint(100000, .little);
-    _ = try stream.write_uint(100000, .big);
+    _ = try stream.writeInt(-100000, .little);
+    _ = try stream.writeInt(-100000, .big);
+    _ = try stream.writeUnsignedInt(100000, .little);
+    _ = try stream.writeUnsignedInt(100000, .big);
 
     // long
-    _ = try stream.write_long(-12314352341234234, .little);
-    _ = try stream.write_long(-12314352341234234, .big);
-    _ = try stream.write_ulong(12314352341234234, .little);
-    _ = try stream.write_ulong(12314352341234234, .big);
+    _ = try stream.writeLong(-12314352341234234, .little);
+    _ = try stream.writeLong(-12314352341234234, .big);
+    _ = try stream.writeUnsignedLong(12314352341234234, .little);
+    _ = try stream.writeUnsignedLong(12314352341234234, .big);
 
     // float
-    _ = try stream.write_float(123.4345, .little);
-    _ = try stream.write_float(123.4345, .big);
+    _ = try stream.writeFloat(123.4345, .little);
+    _ = try stream.writeFloat(123.4345, .big);
 
     // double
-    _ = try stream.write_double(123.4345123123, .little);
-    _ = try stream.write_double(123.4345123123, .big);
+    _ = try stream.writeDouble(123.4345123123, .little);
+    _ = try stream.writeDouble(123.4345123123, .big);
 
     // don't forget to flush!
     try stream.flush();
