@@ -1,93 +1,86 @@
 const std = @import("std");
 
-pub fn BinaryStreamWriter(comptime buffer_size: usize, comptime WriterType: type) type {
-    return struct {
-        const Self = *@This();
+pub const BinaryStreamWriter = struct {
+    const Self = *@This();
 
-        writer: std.io.BufferedWriter(buffer_size, WriterType),
+    writer: std.io.Writer,
 
-        pub fn write(self: Self, value: []const u8) !usize {
-            return try self.writer.write(value);
-        }
+    pub fn write(self: Self, value: []const u8) !usize {
+        return try self.writer.write(value);
+    }
 
-        pub fn writeBool(self: Self, value: bool) !usize {
-            const data = [1]u8{@intFromBool(value)};
-            return try self.writer.write(data[0..]);
-        }
+    pub fn writeBool(self: Self, value: bool) !usize {
+        const data = [1]u8{@intFromBool(value)};
+        return try self.writer.write(data[0..]);
+    }
 
-        pub fn writeByte(self: Self, value: u8) !usize {
-            const data = [1]u8{value};
-            return try self.writer.write(data[0..]);
-        }
+    pub fn writeByte(self: Self, value: u8) !usize {
+        const data = [1]u8{value};
+        return try self.writer.write(data[0..]);
+    }
 
-        pub fn writeShort(self: Self, value: i16, endian: std.builtin.Endian) !usize {
-            const data = std.mem.toBytes(std.mem.nativeTo(i16, value, endian));
-            return try self.writer.write(data[0..]);
-        }
+    pub fn writeShort(self: Self, value: i16, endian: std.builtin.Endian) !usize {
+        const data = std.mem.toBytes(std.mem.nativeTo(i16, value, endian));
+        return try self.writer.write(data[0..]);
+    }
 
-        pub fn writeUnsignedShort(self: Self, value: u16, endian: std.builtin.Endian) !usize {
-            const data = std.mem.toBytes(std.mem.nativeTo(u16, value, endian));
-            return try self.writer.write(data[0..]);
-        }
+    pub fn writeUnsignedShort(self: Self, value: u16, endian: std.builtin.Endian) !usize {
+        const data = std.mem.toBytes(std.mem.nativeTo(u16, value, endian));
+        return try self.writer.write(data[0..]);
+    }
 
-        pub fn writeTriad(self: Self, value: i24, endian: std.builtin.Endian) !usize {
-            const data = std.mem.toBytes(std.mem.nativeTo(i24, value, endian));
-            return try self.writer.write(data[0..3]);
-        }
+    pub fn writeTriad(self: Self, value: i24, endian: std.builtin.Endian) !usize {
+        const data = std.mem.toBytes(std.mem.nativeTo(i24, value, endian));
+        return try self.writer.write(data[0..3]);
+    }
 
-        pub fn writeUnsignedTriad(self: Self, value: u24, endian: std.builtin.Endian) !usize {
-            const data = std.mem.toBytes(std.mem.nativeTo(u24, value, endian));
-            return try self.writer.write(data[0..3]);
-        }
+    pub fn writeUnsignedTriad(self: Self, value: u24, endian: std.builtin.Endian) !usize {
+        const data = std.mem.toBytes(std.mem.nativeTo(u24, value, endian));
+        return try self.writer.write(data[0..3]);
+    }
 
-        pub fn writeInt(self: Self, value: i32, endian: std.builtin.Endian) !usize {
-            const data = std.mem.toBytes(std.mem.nativeTo(i32, value, endian));
-            return try self.writer.write(data[0..]);
-        }
+    pub fn writeInt(self: Self, value: i32, endian: std.builtin.Endian) !usize {
+        const data = std.mem.toBytes(std.mem.nativeTo(i32, value, endian));
+        return try self.writer.write(data[0..]);
+    }
 
-        pub fn writeUnsignedInt(self: Self, value: u32, endian: std.builtin.Endian) !usize {
-            const data = std.mem.toBytes(std.mem.nativeTo(u32, value, endian));
-            return try self.writer.write(data[0..]);
-        }
+    pub fn writeUnsignedInt(self: Self, value: u32, endian: std.builtin.Endian) !usize {
+        const data = std.mem.toBytes(std.mem.nativeTo(u32, value, endian));
+        return try self.writer.write(data[0..]);
+    }
 
-        pub fn writeLong(self: Self, value: i64, endian: std.builtin.Endian) !usize {
-            const data = std.mem.toBytes(std.mem.nativeTo(i64, value, endian));
-            return try self.writer.write(data[0..]);
-        }
+    pub fn writeLong(self: Self, value: i64, endian: std.builtin.Endian) !usize {
+        const data = std.mem.toBytes(std.mem.nativeTo(i64, value, endian));
+        return try self.writer.write(data[0..]);
+    }
 
-        pub fn writeUnsignedLong(self: Self, value: u64, endian: std.builtin.Endian) !usize {
-            const data = std.mem.toBytes(std.mem.nativeTo(u64, value, endian));
-            return try self.writer.write(data[0..]);
-        }
+    pub fn writeUnsignedLong(self: Self, value: u64, endian: std.builtin.Endian) !usize {
+        const data = std.mem.toBytes(std.mem.nativeTo(u64, value, endian));
+        return try self.writer.write(data[0..]);
+    }
 
-        pub fn writeFloat(self: Self, value: f32, endian: std.builtin.Endian) !usize {
-            // cast to u32 since nativeTo cannot bitSwap floats
-            const data = std.mem.toBytes(std.mem.nativeTo(u32, @bitCast(value), endian));
-            return try self.writer.write(data[0..]);
-        }
+    pub fn writeFloat(self: Self, value: f32, endian: std.builtin.Endian) !usize {
+        // cast to u32 since nativeTo cannot bitSwap floats
+        const data = std.mem.toBytes(std.mem.nativeTo(u32, @bitCast(value), endian));
+        return try self.writer.write(data[0..]);
+    }
 
-        pub fn writeDouble(self: Self, value: f64, endian: std.builtin.Endian) !usize {
-            // cast to u64 since nativeTo cannot bitSwap floats
-            const data = std.mem.toBytes(std.mem.nativeTo(u64, @bitCast(value), endian));
-            return try self.writer.write(data[0..]);
-        }
+    pub fn writeDouble(self: Self, value: f64, endian: std.builtin.Endian) !usize {
+        // cast to u64 since nativeTo cannot bitSwap floats
+        const data = std.mem.toBytes(std.mem.nativeTo(u64, @bitCast(value), endian));
+        return try self.writer.write(data[0..]);
+    }
 
-        pub fn flush(self: Self) !void {
-            try self.writer.flush();
-        }
-    };
-}
-
-pub fn binaryStreamWriter(comptime buffer_size: usize, writer: anytype) BinaryStreamWriter(buffer_size, @TypeOf(writer)) {
-    const buffered_writer: std.io.BufferedWriter(buffer_size, @TypeOf(writer)) = .{ .unbuffered_writer = writer };
-    return .{ .writer = buffered_writer };
-}
+    pub fn getBuffer(self: Self) []u8 {
+        return self.writer.buffered();
+    }
+};
 
 test "basic write" {
-    var list = std.ArrayList(u8).init(std.testing.allocator);
+    var list = try std.ArrayList(u8).initCapacity(std.testing.allocator, 256);
     defer list.deinit();
 
-    var stream = binaryStreamWriter(0, list.writer());
+    var stream = BinaryStreamWriter{ .writer = .fixed(list.allocatedSlice()) };
 
     // byte
     const byte_buffer = [3]u8{ 1, 2, 3 };
@@ -130,9 +123,6 @@ test "basic write" {
     _ = try stream.writeDouble(123.4345123123, .little);
     _ = try stream.writeDouble(123.4345123123, .big);
 
-    // don't forget to flush!
-    try stream.flush();
-
     // https://www.eso.org/~ndelmott/ascii.html
     const expected_buffer = [_]u8{
         1, 2, 3, 4, // byte
@@ -159,5 +149,5 @@ test "basic write" {
         64, 94, 219, 207, 12, 186, 194, 108, // big-endian double
     };
 
-    try std.testing.expect(std.mem.eql(u8, list.items, &expected_buffer));
+    try std.testing.expect(std.mem.eql(u8, stream.getBuffer(), &expected_buffer));
 }

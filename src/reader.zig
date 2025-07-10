@@ -7,114 +7,75 @@ fn reverseBuffer(buffer: []u8) void {
     }
 }
 
-// https://graphics.stanford.edu/%7Eseander/bithacks.html#RoundUpPowerOf2
-fn closestPowerOfTwo(comptime number: usize) usize {
-    var numberCopy = number;
-    numberCopy -= 1;
-    numberCopy |= numberCopy >> 1;
-    numberCopy |= numberCopy >> 2;
-    numberCopy |= numberCopy >> 4;
-    numberCopy |= numberCopy >> 8;
-    numberCopy |= numberCopy >> 16;
-    numberCopy |= numberCopy >> 32;
-    numberCopy += 1;
-    return numberCopy;
-}
+pub const BinaryStreamReader = struct {
+    const Self = *@This();
 
-pub fn BinaryStreamReader(comptime ReaderType: type) type {
-    return struct {
-        const Self = *const @This();
+    reader: std.io.Reader,
 
-        reader: ReaderType,
+    pub fn readByte(self: Self) !u8 {
+        return self.reader.takeByte();
+    }
 
-        pub fn readByte(self: Self) !u8 {
-            return self.reader.readByte();
+    pub fn readBytes(self: Self, count: usize) ![]u8 {
+        return try self.reader.take(count);
+    }
+
+    pub fn readBool(self: Self) !bool {
+        return try self.readByte() != 0;
+    }
+
+    pub fn readShort(self: Self, comptime T: type, endian: std.builtin.Endian) !T {
+        return self.readNumber(2, T, endian);
+    }
+
+    pub fn readTriad(self: Self, comptime T: type, endian: std.builtin.Endian) !T {
+        return self.readNumber(3, T, endian);
+    }
+
+    pub fn readInt(self: Self, comptime T: type, endian: std.builtin.Endian) !T {
+        return self.readNumber(4, T, endian);
+    }
+
+    pub fn readLong(self: Self, comptime T: type, endian: std.builtin.Endian) !T {
+        return self.readNumber(8, T, endian);
+    }
+
+    pub fn readFloat(self: Self, endian: std.builtin.Endian) !f32 {
+        return self.readFloatingPointNumber(4, f32, endian);
+    }
+
+    pub fn readDouble(self: Self, endian: std.builtin.Endian) !f64 {
+        return self.readFloatingPointNumber(8, f64, endian);
+    }
+
+    pub fn readNumber(self: Self, comptime bytes: usize, comptime T: type, endian: std.builtin.Endian) !T {
+        return try self.reader.takeVarInt(T, endian, bytes);
+    }
+
+    pub fn readFloatingPointNumber(self: Self, comptime bytes: usize, comptime T: type, endian: std.builtin.Endian) !T {
+        var buffer = try self.reader.take(bytes);
+
+        // we need this hacks since we can't @byteSwap floats and doubles
+        switch (native_endian) {
+            .little => {
+                if (endian == .big) {
+                    reverseBuffer(buffer);
+                }
+            },
+            .big => {
+                if (endian == .little) {
+                    reverseBuffer(buffer);
+                }
+            },
         }
 
-        pub fn readBytes(self: Self, buffer: []u8) !usize {
-            return try self.reader.read(buffer);
-        }
-
-        pub fn readBytesAlloc(self: Self, count: usize, allocator: std.mem.Allocator) ![]u8 {
-            const buffer = try allocator.alloc(u8, count);
-            errdefer allocator.free(buffer);
-            _ = try self.reader.read(buffer);
-            return buffer;
-        }
-
-        pub fn readBool(self: Self) !bool {
-            return try self.readByte() != 0;
-        }
-
-        pub fn readShort(self: Self, comptime T: type, endian: std.builtin.Endian) !T {
-            return self.readNumber(2, T, endian);
-        }
-
-        pub fn readTriad(self: Self, comptime T: type, endian: std.builtin.Endian) !T {
-            return self.readNumber(3, T, endian);
-        }
-
-        pub fn readInt(self: Self, comptime T: type, endian: std.builtin.Endian) !T {
-            return self.readNumber(4, T, endian);
-        }
-
-        pub fn readLong(self: Self, comptime T: type, endian: std.builtin.Endian) !T {
-            return self.readNumber(8, T, endian);
-        }
-
-        pub fn readFloat(self: Self, endian: std.builtin.Endian) !f32 {
-            return self.readFloatingPointNumber(4, f32, endian);
-        }
-
-        pub fn readDouble(self: Self, endian: std.builtin.Endian) !f64 {
-            return self.readFloatingPointNumber(8, f64, endian);
-        }
-
-        pub fn readNumber(self: Self, comptime bytes: usize, comptime T: type, endian: std.builtin.Endian) !T {
-            var buffer = try self.tryGet(bytes);
-            const result = std.mem.bytesAsValue(T, @as([]align(closestPowerOfTwo(bytes)) u8, @alignCast(buffer[0..bytes]))).*;
-            return std.mem.nativeTo(T, result, endian);
-        }
-
-        pub fn readFloatingPointNumber(self: Self, comptime bytes: usize, comptime T: type, endian: std.builtin.Endian) !T {
-            var buffer = try self.tryGet(bytes);
-
-            // we need this hacks since we can't @byteSwap floats and doubles
-            switch (native_endian) {
-                .little => {
-                    if (endian == .big) {
-                        reverseBuffer(&buffer);
-                    }
-                },
-                .big => {
-                    if (endian == .little) {
-                        reverseBuffer(&buffer);
-                    }
-                },
-            }
-
-            return std.mem.bytesAsValue(T, @as([]align(closestPowerOfTwo(bytes)) u8, @alignCast(buffer[0..bytes]))).*;
-        }
-
-        fn tryGet(self: Self, comptime size: usize) ![size]u8 {
-            var buffer: [size]u8 = undefined;
-            const n = try self.reader.read(&buffer);
-            if (n < 2) {
-                return error.NotEnoughBytes;
-            }
-            return buffer;
-        }
-    };
-}
-
-pub fn binaryStreamReader(reader: anytype) BinaryStreamReader(@TypeOf(reader)) {
-    return .{ .reader = reader };
-}
+        return std.mem.bytesAsValue(T, buffer[0..bytes]).*;
+    }
+};
 
 test "basic read" {
     const buffer = [_]u8{
         1, 2, 3, 4, // byte
-        5, 6, 7, 8, // byte alloc
         1, 0, // boolean
         12, 254, // little-endian short (-500)
         254, 12, // big-endian short (-500)
@@ -142,20 +103,14 @@ test "basic read" {
     try list.appendSlice(&buffer);
     defer list.deinit();
 
-    var buffer_stream = std.io.fixedBufferStream(list.items);
-    const reader = buffer_stream.reader();
-    const stream = binaryStreamReader(reader);
+    const reader = std.io.Reader.fixed(list.items);
+    var stream = BinaryStreamReader{ .reader = reader };
 
     // byte
-    var three_bytes: [3]u8 = undefined;
-    try std.testing.expect(try stream.readBytes(&three_bytes) == 3);
-    try std.testing.expect(std.mem.eql(u8, &three_bytes, buffer[0..3]));
+    const three_bytes: []u8 = try stream.readBytes(3);
+    try std.testing.expect(three_bytes.len == 3);
+    try std.testing.expect(std.mem.eql(u8, three_bytes, buffer[0..3]));
     try std.testing.expect(try stream.readByte() == 4);
-
-    // byte alloc
-    const four_bytes_result: []u8 = try stream.readBytesAlloc(4, std.testing.allocator);
-    try std.testing.expect(std.mem.eql(u8, four_bytes_result, buffer[4..8]));
-    std.testing.allocator.free(four_bytes_result);
 
     // bool
     try std.testing.expect(try stream.readBool() == true);
