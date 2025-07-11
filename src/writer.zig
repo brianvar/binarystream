@@ -71,13 +71,14 @@ pub const BinaryStreamWriter = struct {
         return try self.writer.write(data[0..]);
     }
 
-    pub fn getBuffer(self: Self) []u8 {
-        return self.writer.buffered();
+    pub fn flush(self: Self) !void {
+        try self.writer.flush();
     }
 };
 
 test "basic write" {
     var list = try std.ArrayList(u8).initCapacity(std.testing.allocator, 256);
+    list.expandToCapacity();
     defer list.deinit();
 
     var stream = BinaryStreamWriter{ .writer = .fixed(list.allocatedSlice()) };
@@ -123,6 +124,9 @@ test "basic write" {
     _ = try stream.writeDouble(123.4345123123, .little);
     _ = try stream.writeDouble(123.4345123123, .big);
 
+    // Don't forget to flush!
+    try stream.flush();
+
     // https://www.eso.org/~ndelmott/ascii.html
     const expected_buffer = [_]u8{
         1, 2, 3, 4, // byte
@@ -149,5 +153,5 @@ test "basic write" {
         64, 94, 219, 207, 12, 186, 194, 108, // big-endian double
     };
 
-    try std.testing.expect(std.mem.eql(u8, stream.getBuffer(), &expected_buffer));
+    try std.testing.expect(std.mem.eql(u8, list.items[0..stream.writer.end], &expected_buffer));
 }
