@@ -77,9 +77,9 @@ pub const BinaryStreamWriter = struct {
 };
 
 test "basic write" {
-    var list = try std.ArrayList(u8).initCapacity(std.testing.allocator, 256);
+    var list: std.ArrayList(u8) = try .initCapacity(std.testing.allocator, 256);
     list.expandToCapacity();
-    defer list.deinit();
+    defer list.deinit(std.testing.allocator);
 
     var stream = BinaryStreamWriter{ .writer = .fixed(list.allocatedSlice()) };
 

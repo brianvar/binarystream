@@ -99,9 +99,9 @@ test "basic read" {
         64, 94, 219, 207, 12, 186, 194, 108, // big-endian double
     };
 
-    var list = std.ArrayList(u8).init(std.testing.allocator);
-    try list.appendSlice(&buffer);
-    defer list.deinit();
+    var list: std.ArrayList(u8) = .empty;
+    try list.appendSlice(std.testing.allocator, &buffer);
+    defer list.deinit(std.testing.allocator);
 
     const reader = std.io.Reader.fixed(list.items);
     var stream = BinaryStreamReader{ .reader = reader };
