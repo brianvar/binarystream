@@ -10,7 +10,7 @@ fn reverseBuffer(buffer: []u8) void {
 pub const BinaryStreamReader = struct {
     const Self = *@This();
 
-    reader: std.io.Reader,
+    reader: std.Io.Reader,
 
     pub fn readByte(self: Self) !u8 {
         return self.reader.takeByte();
@@ -103,7 +103,7 @@ test "basic read" {
     try list.appendSlice(std.testing.allocator, &buffer);
     defer list.deinit(std.testing.allocator);
 
-    const reader = std.io.Reader.fixed(list.items);
+    const reader = std.Io.Reader.fixed(list.items);
     var stream = BinaryStreamReader{ .reader = reader };
 
     // byte

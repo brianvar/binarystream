@@ -3,7 +3,7 @@ const std = @import("std");
 pub const BinaryStreamWriter = struct {
     const Self = *@This();
 
-    writer: std.io.Writer,
+    writer: std.Io.Writer,
 
     pub fn write(self: Self, value: []const u8) !usize {
         return try self.writer.write(value);
