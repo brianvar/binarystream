@@ -1,8 +1,8 @@
 .{
     .name = .binarystream,
-    .version = "0.0.1",
+    .version = "0.1.0",
     .fingerprint = 0xc6bd21cbfa1bdb8b,
-    .minimum_zig_version = "0.14.0",
+    .minimum_zig_version = "0.17.0",
 
     .dependencies = .{},
     .paths = .{
